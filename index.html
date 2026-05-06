@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surgical Billing Automation - Web App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-box:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-box.drag-over {
+            border-color: #764ba2;
+            background: #e8eaff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .upload-text p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .file-item {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .file-item .remove {
+            color: #ff6b6b;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .progress-section {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .status-message.processing {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-message.success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .validation-issues {
+            background: #fff5f5;
+            border: 1px solid #ffcccc;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .validation-issues h3 {
+            color: #c62828;
+            margin-bottom: 10px;
+        }
+
+        .issue-item {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 3px solid #ff6b6b;
+            font-size: 14px;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .export-buttons button {
+            flex: 1;
+            padding: 12px;
+            background: #4caf50;
+            color: white;
+        }
+
+        .export-buttons button:hover {
+            background: #45a049;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Surgical Billing Automation</h1>
+            <p>Upload documents and automatically extract billing information</p>
+        </div>
+
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h2 style="margin-bottom: 20px; color: #333;">📄 Upload Documents</h2>
+
+                <div class="upload-box" id="uploadBox">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">
+                        <h3>Drag documents here or click to select</h3>
+                        <p>Supported: PDF, PNG, JPG, DOCX (max 50MB)</p>
+                    </div>
+                </div>
+
+                <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.docx">
+
+                <div class="file-list" id="fileList">
+                    <h3 style="margin: 20px 0 10px 0; color: #333;">Selected Files:</h3>
+                    <div id="filesContainer"></div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="processBtn" disabled>🔄 Extract & Analyze</button>
+                    <button class="btn-secondary" id="clearBtn">🗑️ Clear</button>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section" id="progressSection">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="status-message processing" id="statusMessage">Processing documents...</div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection">
+                <h2 style="margin-bottom: 20px; color: #333;">📊 Extraction Results</h2>
+
+                <!-- Validation Issues -->
+                <div class="validation-issues" id="validationIssues" style="display: none;">
+                    <h3>⚠️ Validation Issues</h3>
+                    <div id="issuesContainer"></div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="patient">👤 Patient Info</button>
+                    <button class="tab" data-tab="insurance">🛡️ Insurance</button>
+                    <button class="tab" data-tab="procedure">⚕️ Procedure</button>
+                    <button class="tab" data-tab="provider">👨‍⚕️ Provider</button>
+                    <button class="tab" data-tab="charges">💰 Charges</button>
+                    <button class="tab" data-tab="cms1500">📋 CMS-1500</button>
+                    <button class="tab" data-tab="ub04">📋 UB-04</button>
+                </div>
+
+                <div class="tab-content active" id="tab-patient"></div>
+                <div class="tab-content" id="tab-insurance"></div>
+                <div class="tab-content" id="tab-procedure"></div>
+                <div class="tab-content" id="tab-provider"></div>
+                <div class="tab-content" id="tab-charges"></div>
+                <div class="tab-content" id="tab-cms1500"></div>
+                <div class="tab-content" id="tab-ub04"></div>
+
+                <!-- Export Buttons -->
+                <div class="export-buttons">
+                    <button id="downloadJsonBtn">💾 Download JSON</button>
+                    <button id="printBtn">🖨️ Print Drafts</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const filesContainer = document.getElementById('filesContainer');
+        const processBtn = document.getElementById('processBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const progressSection = document.getElementById('progressSection');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultsSection = document.getElementById('resultsSection');
+
+        let selectedFiles = [];
+        let lastResults = null;
+
+        // File upload handlers
+        uploadBox.addEventListener('click', () => fileInput.click());
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('drag-over');
+        });
+        uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('drag-over'));
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            updateFileList();
+            processBtn.disabled = selectedFiles.length === 0;
+        }
+
+        function updateFileList() {
+            if (selectedFiles.length === 0) {
+                fileList.style.display = 'none';
+                return;
+            }
+
+            fileList.style.display = 'block';
+            filesContainer.innerHTML = selectedFiles.map((file, index) =>
+                `<div class="file-item">
+                    <span>📄 ${file.name}</span>
+                    <span class="remove" onclick="removeFile(${index})">✕</span>
+                </div>`
+            ).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+            processBtn.disabled = selectedFiles.length === 0;
+        }
+
+        clearBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            fileInput.value = '';
+            updateFileList();
+            resultsSection.style.display = 'none';
+        });
+
+        processBtn.addEventListener('click', uploadFiles);
+
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => formData.append('files', file));
+
+            progressSection.style.display = 'block';
+            processBtn.disabled = true;
+            resultsSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    lastResults = result;
+                    displayResults(result);
+                    statusMessage.className = 'status-message success';
+                    statusMessage.textContent = '✅ Processing complete!';
+                    document.getElementById('progressFill').style.width = '100%';
+                } else {
+                    statusMessage.className = 'status-message error';
+                    statusMessage.textContent = '❌ Error: ' + result.error;
+                }
+            } catch (error) {
+                statusMessage.className = 'status-message error';
+                statusMessage.textContent = '❌ Error: ' + error.message;
+            } finally {
+                processBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            resultsSection.style.display = 'block';
+
+            // Patient Info
+            document.getElementById('tab-patient').textContent = formatData({
+                'Full Name': data.patient_data.patient_name,
+                'DOB': data.patient_data.patient_dob,
+                'SSN': data.patient_data.patient_ssn,
+                'Address': data.patient_data.patient_address,
+                'Phone': data.patient_data.patient_phone
+            });
+
+            // Insurance
+            document.getElementById('tab-insurance').textContent = formatData({
+                'Payer': data.patient_data.insurance_payer_name,
+                'Member ID': data.patient_data.insurance_member_id,
+                'Group': data.patient_data.insurance_group_number,
+                'Plan Type': data.patient_data.insurance_plan_type,
+                'Deductible': data.patient_data.insurance_deductible,
+                'Co-insurance %': data.patient_data.insurance_coinsurance_pct
+            });
+
+            // Procedure
+            document.getElementById('tab-procedure').textContent = formatData({
+                'Procedure': data.patient_data.procedure_name,
+                'Date': data.patient_data.procedure_date,
+                'CPT Code': data.patient_data.cpt_primary,
+                'Diagnosis': data.patient_data.diagnosis_primary,
+                'Laterality': data.patient_data.laterality
+            });
+
+            // Provider
+            document.getElementById('tab-provider').textContent = formatData({
+                'Surgeon': data.patient_data.surgeon_name,
+                'Surgeon NPI': data.patient_data.surgeon_npi,
+                'Facility': data.patient_data.facility_name,
+                'Facility NPI': data.patient_data.facility_npi,
+                'Tax ID': data.patient_data.facility_tax_id
+            });
+
+            // Charges
+            document.getElementById('tab-charges').textContent = formatData({
+                'Base Charge': '$' + data.patient_data.base_charge,
+                'Anesthesia': '$' + data.patient_data.anesthesia_charge,
+                'Facility': '$' + data.patient_data.facility_charge,
+                'Total': '$' + (data.patient_data.base_charge + data.patient_data.anesthesia_charge + data.patient_data.facility_charge)
+            });
+
+            // Drafts
+            document.getElementById('tab-cms1500').textContent = JSON.stringify(data.cms1500_draft, null, 2);
+            document.getElementById('tab-ub04').textContent = JSON.stringify(data.ub04_draft, null, 2);
+
+            // Validation issues
+            const issues = data.validation_issues;
+            const hasIssues = Object.values(issues).some(arr => arr.length > 0);
+            if (hasIssues) {
+                document.getElementById('validationIssues').style.display = 'block';
+                let issuesHTML = '';
+                for (const [category, issueList] of Object.entries(issues)) {
+                    if (issueList.length > 0) {
+                        issuesHTML += `<div class="issue-item"><strong>${category.toUpperCase()}:</strong> ${issueList.join(', ')}</div>`;
+                    }
+                }
+                document.getElementById('issuesContainer').innerHTML = issuesHTML;
+            }
+        }
+
+        function formatData(obj) {
+            return Object.entries(obj)
+                .filter(([k, v]) => v)
+                .map(([k, v]) => `${k.padEnd(20)}: ${v}`)
+                .join('\n');
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Export buttons
+        document.getElementById('downloadJsonBtn').addEventListener('click', () => {
+            const dataStr = JSON.stringify(lastResults, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `billing_data_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        });
+
+        document.getElementById('printBtn').addEventListener('click', () => {
+            window.print();
+        });
+    </script>
+</body>
+</html>
